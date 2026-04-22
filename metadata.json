@@ -1,0 +1,8 @@
+{
+  "name": "Ocean View",
+  "description": "A premium coastal dining experience with real-time AI sommelier curation and smart menu artifact discovery.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}
