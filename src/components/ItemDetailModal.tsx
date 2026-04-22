@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { X, Plus, Leaf, Star, Flame, PenLine, Share2, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Leaf, Star, Flame, PenLine, Share2, Check, Sparkles, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MenuItem, Review } from '../types';
+import { getAIPairingSuggestion } from '../services/gemini';
 
 interface ItemDetailModalProps {
   item: MenuItem | null;
@@ -24,6 +25,20 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [dynamicPairing, setDynamicPairing] = useState<string | null>(null);
+  const [isLoadingPairing, setIsLoadingPairing] = useState(false);
+
+  useEffect(() => {
+    if (item && isOpen) {
+      setIsLoadingPairing(true);
+      getAIPairingSuggestion(item).then(suggestion => {
+        setDynamicPairing(suggestion);
+        setIsLoadingPairing(false);
+      });
+    } else {
+      setDynamicPairing(null);
+    }
+  }, [item, isOpen]);
 
   if (!item) return null;
 
@@ -162,6 +177,27 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                   <p className="serif text-xl italic font-light leading-relaxed text-cream/70">
                     "{item.detailedDescription || mockDetailed}"
                   </p>
+                </div>
+
+                {/* AI Pairing */}
+                <div className="bg-gold/5 border border-gold/10 p-8 space-y-4 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-20 h-20 text-gold" />
+                  </div>
+                  <div className="flex items-center gap-3 mb-2">
+                    {isLoadingPairing ? <Loader2 className="w-4 h-4 text-gold animate-spin" /> : <Sparkles className="w-4 h-4 text-gold" />}
+                    <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Curated Pairing Suggestion</span>
+                  </div>
+                  <AnimatePresence mode="wait">
+                    <motion.p 
+                      key={dynamicPairing}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-sm font-light leading-relaxed italic text-cream/70"
+                    >
+                      {isLoadingPairing ? "Consulting our cellar ledger..." : dynamicPairing}
+                    </motion.p>
+                  </AnimatePresence>
                 </div>
 
                 {/* Ingredients */}

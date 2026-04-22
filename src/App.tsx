@@ -6,11 +6,12 @@ import { CartDrawer } from './components/CartDrawer';
 import { StripeExplanation } from './components/StripeExplanation';
 import { MENU_ITEMS } from './constants';
 import { CartItem, MenuItem, Order, Review } from './types';
-import { ArrowDown, ChevronRight, MapPin, Clock, User, Check, Search } from 'lucide-react';
+import { smartMoodSearch } from './services/gemini';
+import { ArrowDown, ChevronRight, MapPin, Clock, User, Check, Search, Sparkles } from 'lucide-react';
 
 import { ReservationModal } from './components/ReservationModal';
 import { ProfileModal } from './components/ProfileModal';
-import { QRScannerModal } from './components/QRScannerModal';
+import { MenuQRModal } from './components/MenuQRModal';
 import { ItemDetailModal } from './components/ItemDetailModal';
 
 export default function App() {
@@ -18,11 +19,12 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isResOpen, setIsResOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [isMenuQROpen, setIsMenuQROpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [tableNumber, setTableNumber] = useState<string | null>(null);
   const [view, setView] = useState<'home' | 'checkout' | 'success'>('home');
   const [menuItems, setMenuItems] = useState<MenuItem[]>(MENU_ITEMS);
+  const [isAISearching, setIsAISearching] = useState(false);
   const [itemReviews, setItemReviews] = useState<Record<string, Review[]>>({});
 
   const footer = (
@@ -118,6 +120,19 @@ export default function App() {
     ));
   };
 
+  const handleMoodSearch = async (query: string) => {
+    if (!query.trim()) {
+      setMenuItems(MENU_ITEMS);
+      return;
+    }
+    setIsAISearching(true);
+    const matchedIds = await smartMoodSearch(query, MENU_ITEMS);
+    if (matchedIds.length > 0) {
+      setMenuItems(MENU_ITEMS.filter(item => matchedIds.includes(item.id)));
+    }
+    setIsAISearching(false);
+  };
+
   if (view === 'success') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
@@ -163,7 +178,7 @@ export default function App() {
           onOpenCart={() => setIsCartOpen(true)}
           onOpenReservations={() => setIsResOpen(true)}
           onOpenProfile={() => setIsProfileOpen(true)}
-          onOpenQRScanner={() => setIsQRScannerOpen(true)}
+          onOpenQR={() => setIsMenuQROpen(true)}
           tableNumber={tableNumber}
           onOpenDelivery={() => {}}
         />
@@ -239,6 +254,8 @@ export default function App() {
                     onAddToCart={handleAddToCart}
                     onSelectItem={(item) => setSelectedItem(item)}
                     onSearch={handleSearch}
+                    onMoodSearch={handleMoodSearch}
+                    isAISearching={isAISearching}
                   />
                 </div>
               </div>
@@ -284,10 +301,10 @@ export default function App() {
         orders={orderHistory}
       />
 
-      <QRScannerModal 
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
-        onTableScan={(num) => setTableNumber(num)}
+      <MenuQRModal 
+        isOpen={isMenuQROpen}
+        onClose={() => setIsMenuQROpen(false)}
+        tableNumber={tableNumber}
       />
 
       <ItemDetailModal 

@@ -9,6 +9,9 @@ interface ReservationModalProps {
 
 export const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<string[] | null>(null);
+  const [selectedAtmosphere, setSelectedAtmosphere] = useState('Main Hall');
   const [formData, setFormData] = useState({
     date: '',
     time: '',
@@ -16,6 +19,27 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onCl
     name: '',
     email: '',
   });
+
+  const handleSearch = () => {
+    if (!formData.date || !formData.time) return;
+    
+    setIsSearching(true);
+    setAvailableSlots(null);
+
+    // Mock search logic: generates 3 slots around the requested time
+    setTimeout(() => {
+      const [hours, minutes] = formData.time.split(':');
+      const h = parseInt(hours);
+      const slots = [
+        `${h-1 < 0 ? 23 : h-1}:${minutes}`,
+        formData.time,
+        `${h+1 > 23 ? 0 : h+1}:${minutes}`
+      ].sort();
+      
+      setAvailableSlots(slots);
+      setIsSearching(false);
+    }, 1500);
+  };
 
   const handleBook = () => {
     setStep(3);
@@ -60,7 +84,13 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onCl
                     <label className="text-[10px] uppercase tracking-widest opacity-40 font-bold block">Select Atmosphere</label>
                     <div className="grid grid-cols-2 gap-2">
                        {['Main Hall', 'Terrace', 'Private Cellar', 'Chef Counter'].map(box => (
-                         <button key={box} className="px-4 py-3 border border-gold/10 text-[10px] uppercase tracking-widest hover:border-gold hover:text-gold transition-all text-left">
+                         <button 
+                           key={box} 
+                           onClick={() => setSelectedAtmosphere(box)}
+                           className={`px-4 py-3 border text-[10px] uppercase tracking-widest transition-all text-left ${
+                             selectedAtmosphere === box ? 'border-gold text-gold bg-gold/5' : 'border-gold/10 hover:border-gold/30'
+                           }`}
+                         >
                            {box}
                          </button>
                        ))}
@@ -97,7 +127,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onCl
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest opacity-40 font-bold block">Arrival Time</label>
+                    <label className="text-[10px] uppercase tracking-widest opacity-40 font-bold block">Preferred Time</label>
                     <div className="flex items-center border-b border-gold/30">
                       <Clock className="w-4 h-4 text-gold opacity-50 mr-3" />
                       <input 
@@ -109,12 +139,49 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onCl
                     </div>
                   </div>
 
-                  <button 
-                    onClick={() => setStep(2)}
-                    className="w-full bg-gold text-ink py-5 font-bold uppercase tracking-[0.4em] text-[10px] hover:bg-white hover:text-black transition-all"
-                  >
-                    Continue to Details
-                  </button>
+                  {availableSlots ? (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-4"
+                    >
+                      <label className="text-[10px] uppercase tracking-widest text-gold font-bold block">Available Tables Found</label>
+                      <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                        {availableSlots.map(slot => (
+                          <button
+                            key={slot}
+                            onClick={() => {
+                              setFormData({...formData, time: slot});
+                              setStep(2);
+                            }}
+                            className={`shrink-0 px-6 py-3 border border-gold/30 rounded-none text-[10px] font-bold tracking-widest hover:bg-gold hover:text-ink transition-all ${
+                              formData.time === slot ? 'bg-gold text-ink' : 'bg-transparent text-cream'
+                            }`}
+                          >
+                            {slot}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[9px] uppercase tracking-widest opacity-30 italic">Select a timestamp to proceed</p>
+                    </motion.div>
+                  ) : (
+                    <button 
+                      onClick={handleSearch}
+                      disabled={isSearching || !formData.date || !formData.time}
+                      className="w-full border border-gold/30 text-gold py-5 font-bold uppercase tracking-[0.4em] text-[10px] hover:bg-gold/10 disabled:opacity-20 transition-all flex items-center justify-center gap-3"
+                    >
+                      {isSearching ? (
+                        <>
+                          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
+                            <Clock className="w-4 h-4" />
+                          </motion.div>
+                          Verifying Placements...
+                        </>
+                      ) : (
+                        'Search Available Tables'
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -171,6 +238,10 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onCl
                       <div className="flex justify-between items-center text-[10px] uppercase tracking-[0.2em] font-bold">
                         <span className="opacity-40">Guests</span>
                         <span className="text-gold">{formData.guests} persons</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] uppercase tracking-[0.2em] font-bold">
+                        <span className="opacity-40">Atmosphere</span>
+                        <span className="text-gold">{selectedAtmosphere}</span>
                       </div>
                     </div>
                   </div>

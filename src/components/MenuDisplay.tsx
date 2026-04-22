@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Sparkles, Loader2 } from 'lucide-react';
 import { MenuItem } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -8,10 +8,20 @@ interface MenuDisplayProps {
   onAddToCart: (item: MenuItem) => void;
   onSelectItem: (item: MenuItem) => void;
   onSearch: (query: string) => void;
+  onMoodSearch: (query: string) => void;
+  isAISearching: boolean;
 }
 
-export const MenuDisplay: React.FC<MenuDisplayProps> = ({ items, onAddToCart, onSelectItem, onSearch }) => {
+export const MenuDisplay: React.FC<MenuDisplayProps> = ({ 
+  items, 
+  onAddToCart, 
+  onSelectItem, 
+  onSearch, 
+  onMoodSearch,
+  isAISearching 
+}) => {
   const [searchValue, setSearchValue] = useState('');
+  const [isAIMode, setIsAIMode] = useState(false);
   const [activeCategory, setActiveCategory] = useState<'All' | 'Food' | 'Drink'>('All');
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -22,13 +32,17 @@ export const MenuDisplay: React.FC<MenuDisplayProps> = ({ items, onAddToCart, on
     }
 
     debounceTimer.current = setTimeout(() => {
-      onSearch(searchValue);
-    }, 400);
+      if (isAIMode) {
+        onMoodSearch(searchValue);
+      } else {
+        onSearch(searchValue);
+      }
+    }, isAIMode ? 800 : 400);
 
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [searchValue, onSearch]);
+  }, [searchValue, onSearch, onMoodSearch, isAIMode]);
 
   const categories = ['All', 'Food', 'Drink', 'Dessert'];
   
@@ -72,13 +86,29 @@ export const MenuDisplay: React.FC<MenuDisplayProps> = ({ items, onAddToCart, on
           <input
             type="text"
             value={searchValue}
-            placeholder="“Search flavors...”"
+            placeholder={isAIMode ? "“Describe your mood...”" : "“Search flavors...”"}
             className="w-full bg-transparent border-b border-gold/30 py-3 pl-12 pr-6 serif italic text-2xl focus:outline-none focus:border-gold transition-all placeholder:opacity-20"
             onChange={(e) => setSearchValue(e.target.value)}
           />
-          <Search className="absolute left-0 bottom-4 w-6 h-6 text-gold opacity-40" />
-          <div className="absolute right-0 bottom-4 text-[10px] uppercase tracking-widest opacity-20">Filter active</div>
+          {isAISearching ? (
+            <Loader2 className="absolute left-0 bottom-4 w-6 h-6 text-gold animate-spin" />
+          ) : (
+            isAIMode ? <Sparkles className="absolute left-0 bottom-4 w-6 h-6 text-gold" /> : <Search className="absolute left-0 bottom-4 w-6 h-6 text-gold opacity-40" />
+          )}
+          <div className="absolute right-0 bottom-4 text-[10px] uppercase tracking-widest opacity-20">
+            {isAIMode ? "Atmosphere Analysis Active" : "Standard Filter active"}
+          </div>
         </div>
+
+        <button 
+          onClick={() => setIsAIMode(!isAIMode)}
+          className={`group flex flex-col items-center gap-2 transition-all ${isAIMode ? 'opacity-100' : 'opacity-40 hover:opacity-100'}`}
+        >
+          <div className={`border p-4 rounded-full transition-all ${isAIMode ? 'bg-gold border-gold' : 'border-gold/30 hover:border-gold'}`}>
+            <Sparkles className={`w-5 h-5 ${isAIMode ? 'text-ink' : 'text-gold'}`} />
+          </div>
+          <span className="text-[10px] uppercase tracking-widest font-bold">Atmosphere</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">

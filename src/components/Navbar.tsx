@@ -7,7 +7,7 @@ interface NavbarProps {
   onOpenCart: () => void;
   onOpenReservations: () => void;
   onOpenProfile: () => void;
-  onOpenQRScanner: () => void;
+  onOpenQR: () => void;
   tableNumber: string | null;
   onOpenDelivery: () => void;
 }
@@ -17,7 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCart, 
   onOpenReservations, 
   onOpenProfile,
-  onOpenQRScanner,
+  onOpenQR,
   tableNumber,
   onOpenDelivery
 }) => {
@@ -58,9 +58,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="hidden lg:flex items-center gap-8 text-[10px] font-bold uppercase tracking-[0.3em] text-cream/40">
           <a href="#menu" className="hover:text-gold transition-colors">Selection</a>
           <button onClick={onOpenReservations} className="hover:text-gold transition-colors uppercase">Tables</button>
-          <button onClick={onOpenQRScanner} className="flex items-center gap-2 hover:text-gold transition-colors uppercase">
+          <button onClick={onOpenQR} className="flex items-center gap-2 hover:text-gold transition-colors uppercase">
             <QrCode className="w-3.5 h-3.5" />
-            Scan QR
+            Menu QR
           </button>
           <a href="#delivery" className="hover:text-gold transition-colors">Concierge</a>
         </div>
@@ -114,10 +114,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
                       </div>
                       <button 
-                        onClick={() => { setIsDropdownOpen(false); onOpenQRScanner(); }}
+                        onClick={() => { setIsDropdownOpen(false); onOpenQR(); }}
                         className="text-[8px] uppercase tracking-widest font-bold text-gold/40 hover:text-gold"
                       >
-                        Change
+                        Portal
                       </button>
                     </div>
 
